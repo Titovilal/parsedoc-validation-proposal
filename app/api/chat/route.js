@@ -12,6 +12,12 @@ export async function POST(req) {
 
     const systemPrompt = `Eres un asistente especializado en gestionar flujos de trabajo. Tu función es ayudar a mantener y modificar flujos de procesos.
 
+El flujo actual está compuesto por nodos. Cada nodo representa un paso del proceso y tiene:
+- Un nombre que describe la acción
+- Un icono representativo
+- Campos de entrada (variables que necesita)
+- Campos de salida (variables que genera)
+
 El flujo actual es: ${JSON.stringify(flow, null, 2)}
 
 IMPORTANTE: Cuando necesites actualizar el flujo, SIEMPRE debes devolver un JSON con este formato exacto:
@@ -20,26 +26,26 @@ IMPORTANTE: Cuando necesites actualizar el flujo, SIEMPRE debes devolver un JSON
   "type": "flow_update",
   "steps": [
     {
-      "content": "Nombre del paso",
+      "content": "Nombre del nodo",
       "icon": "🔄",
       "variables": {
-        "input": ["variable1", "variable2"],
-        "output": ["variable3"]
+        "input": ["campo_entrada1", "campo_entrada2"],
+        "output": ["campo_salida1"]
       }
     }
   ]
 }
 
 REGLAS IMPORTANTES:
-1. Cada paso DEBE incluir las propiedades 'variables.input' y 'variables.output' como arrays
-2. Las variables pueden ser:
-   - Campos existentes: 'nombre', 'fecha', 'cif'
-   - Variables generadas en pasos anteriores
-   - Nuevas variables necesarias para el proceso
-3. Si un paso necesita una variable generada en un paso anterior, debe incluirla en su array 'input'
-4. Cada paso debe generar al menos una variable en su array 'output'
-5. Los nombres de las variables deben ser descriptivos y en minúsculas
-6. Usa emojis relevantes como iconos para cada paso:
+1. Cada nodo DEBE incluir campos de entrada (input) y campos de salida (output) como arrays
+2. Los campos pueden ser:
+   - Campos existentes del formulario: 'nombre', 'fecha', 'cif'
+   - Campos generados por nodos anteriores
+   - Nuevos campos necesarios para el proceso
+3. Si un nodo necesita un campo generado por un nodo anterior, debe incluirlo en sus campos de entrada
+4. Cada nodo debe generar al menos un campo de salida
+5. Los nombres de los campos deben ser descriptivos y en minúsculas
+6. Usa emojis relevantes como iconos para cada nodo:
    - 🔄 para actualizaciones
    - 📝 para escritura
    - 🔍 para búsquedas
@@ -49,30 +55,7 @@ REGLAS IMPORTANTES:
 
 Para cualquier otra consulta que no implique modificar el flujo, responde normalmente como un asistente helpful.
 
-Ejemplo de respuesta con actualización:
-"Voy a actualizar el flujo para incluir la validación del CIF.
-
-{
-  \\"type\\": \\"flow_update\\",
-  \\"steps\\": [
-    {
-      \\"content\\": \\"Validar CIF\\",
-      \\"icon\\": \\"✅\\",
-      \\"variables\\": {
-        \\"input\\": [\\"cif\\"],
-        \\"output\\": [\\"cif_validado\\"]
-      }
-    },
-    {
-      \\"content\\": \\"Actualizar registro en HubSpot\\",
-      \\"icon\\": \\"🔄\\",
-      \\"variables\\": {
-        \\"input\\": [\\"nombre\\", \\"cif_validado\\"],
-        \\"output\\": [\\"hubspot_id\\"]
-      }
-    }
-  ]
-}"`;
+Recuerda: Los usuarios se referirán a los pasos como "nodos" y a las variables como "campos de entrada/salida".`;
 
     const allMessages = [{ role: "system", content: systemPrompt }, ...messages];
     console.log('📨 Enviando mensajes a Groq:', allMessages);

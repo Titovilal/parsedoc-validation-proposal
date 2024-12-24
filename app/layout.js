@@ -1,13 +1,16 @@
 import './globals.css'
 import { ResourceProvider } from './contexts/ResourceContext'
+import { ThemeProvider } from './contexts/ThemeContext'
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="es">
+    <html lang="en">
       <body>
-        <ResourceProvider>
-          {children}
-        </ResourceProvider>
+        <ThemeProvider>
+          <ResourceProvider>
+            {children}
+          </ResourceProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

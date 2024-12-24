@@ -1,9 +1,8 @@
 'use client';
 import { useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { ThumbsUp, ThumbsDown, Trash2 } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, Trash2, RotateCcw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useResource } from '../contexts/ResourceContext';
 
 const MessageContent = ({ content }) => (
   <div className="prose prose-sm max-w-none">
@@ -19,12 +18,14 @@ export default function Chat({
   partialResponse, 
   handleSubmit, 
   handleFeedback,
-  clearChat
+  clearChat,
+  lowResourceMode,
+  toggleLowResourceMode,
+  undoToMessage
 }) {
   const chatContainerRef = useRef(null);
-  const { lowResources } = useResource();
 
-  const messageVariants = !lowResources ? {
+  const messageVariants = !lowResourceMode ? {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0 },
     exit: { opacity: 0, x: -100 }
@@ -46,16 +47,16 @@ export default function Chat({
           </button>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-600">Modo ligero</span>
+          <span className="text-sm text-gray-600">Bajos recursos</span>
           <button
-            onClick={() => setLowResources(!lowResources)}
+            onClick={toggleLowResourceMode}
             className={`w-12 h-6 rounded-full transition-colors ${
-              lowResources ? 'bg-green-500' : 'bg-gray-300'
+              lowResourceMode ? 'bg-green-500' : 'bg-gray-300'
             }`}
           >
             <motion.div
               className="w-5 h-5 bg-white rounded-full shadow-md"
-              animate={{ x: lowResources ? 24 : 2 }}
+              animate={{ x: lowResourceMode ? 24 : 2 }}
               transition={{ type: "spring", stiffness: 500, damping: 30 }}
             />
           </button>
@@ -71,10 +72,10 @@ export default function Chat({
             <motion.div
               key={index}
               variants={messageVariants}
-              initial={!lowResources ? "hidden" : false}
-              animate={!lowResources ? "visible" : false}
-              exit={!lowResources ? "exit" : false}
-              layout={!lowResources}
+              initial={!lowResourceMode ? "hidden" : false}
+              animate={!lowResourceMode ? "visible" : false}
+              exit={!lowResourceMode ? "exit" : false}
+              layout={!lowResourceMode}
               className={`p-4 rounded-2xl backdrop-blur-sm transition-all duration-200 ${
                 message.role === 'user' 
                   ? 'bg-green-50 ml-auto max-w-[80%] hover:shadow-md border border-green-100' 
@@ -84,8 +85,8 @@ export default function Chat({
               <MessageContent content={message.content} />
               {message.role === 'assistant' && (
                 <motion.div 
-                  initial={!lowResources ? { opacity: 0 } : false}
-                  animate={!lowResources ? { opacity: 1 } : false}
+                  initial={!lowResourceMode ? { opacity: 0 } : false}
+                  animate={!lowResourceMode ? { opacity: 1 } : false}
                   className="mt-2 flex gap-2"
                 >
                   <button
@@ -104,6 +105,13 @@ export default function Chat({
                   >
                     <ThumbsDown className="h-5 w-5" />
                   </button>
+                  <button
+                    onClick={() => undoToMessage(index)}
+                    className="p-1 rounded-full hover:bg-gray-100 transition-all text-gray-400 hover:text-orange-500"
+                    title="Deshacer hasta este mensaje"
+                  >
+                    <RotateCcw className="h-5 w-5" />
+                  </button>
                 </motion.div>
               )}
             </motion.div>
@@ -112,8 +120,8 @@ export default function Chat({
         
         {partialResponse && (
           <motion.div
-            initial={!lowResources ? { opacity: 0, y: 20 } : false}
-            animate={!lowResources ? { opacity: 1, y: 0 } : false}
+            initial={!lowResourceMode ? { opacity: 0, y: 20 } : false}
+            animate={!lowResourceMode ? { opacity: 1, y: 0 } : false}
             className="bg-white p-4 rounded-2xl mr-auto max-w-[80%] border border-gray-100"
           >
             <MessageContent content={partialResponse} />
@@ -132,7 +140,7 @@ export default function Chat({
         <motion.button
           type="submit"
           disabled={isLoading}
-          whileTap={!lowResources ? { scale: 0.95 } : false}
+          whileTap={!lowResourceMode ? { scale: 0.95 } : false}
           className="px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all disabled:bg-green-300 shadow-lg shadow-green-600/10 hover:shadow-xl hover:shadow-green-600/20"
         >
           Enviar

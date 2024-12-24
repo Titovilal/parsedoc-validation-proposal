@@ -1,10 +1,16 @@
 import { useState } from 'react';
+import { useResource } from '../contexts/ResourceContext';
 
 export function useChat({ flow, updateFlow }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [partialResponse, setPartialResponse] = useState('');
+  const { lowResourceMode } = useResource();
+
+  // Nuevo estado para guardar el historial de estados del flow
+  const [flowHistory, setFlowHistory] = useState([flow]);
+  const [historyIndex, setHistoryIndex] = useState(0);
 
   // Función auxiliar para encontrar JSON válido en un string
   const findJsonInString = (str) => {
@@ -54,6 +60,8 @@ export function useChat({ flow, updateFlow }) {
 
     setIsLoading(true);
     const userMessage = { role: 'user', content: message };
+    
+    // Añadir el mensaje del usuario al estado
     setMessages(prev => [...prev, userMessage]);
     setInput('');
 
@@ -64,8 +72,10 @@ export function useChat({ flow, updateFlow }) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          // Enviamos todos los mensajes anteriores para mantener el contexto
           messages: [...messages, userMessage],
           flow,
+          lowResourceMode
         }),
       });
 
@@ -82,15 +92,12 @@ export function useChat({ flow, updateFlow }) {
         const chunk = decoder.decode(value);
         accumulatedResponse += chunk;
         
-        // Actualizar el mensaje parcial
         setPartialResponse(accumulatedResponse);
 
         // Buscar y procesar JSON en la respuesta
         const jsonObjects = findJsonInString(accumulatedResponse);
         for (const { json, string } of jsonObjects) {
-          console.log('JSON encontrado:', json); // Log para depuración
           if (json.type === 'flow_update') {
-            console.log('Actualizando flow con:', json.steps);
             updateFlow(json.steps);
             accumulatedResponse = accumulatedResponse.replace(string, '');
             setPartialResponse(accumulatedResponse);
@@ -98,7 +105,11 @@ export function useChat({ flow, updateFlow }) {
         }
       }
 
-      setMessages(prev => [...prev, { role: 'assistant', content: accumulatedResponse.trim() }]);
+      // Añadir la respuesta completa del asistente
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: accumulatedResponse.trim() 
+      }]);
       setPartialResponse('');
 
     } catch (error) {
@@ -122,6 +133,35 @@ export function useChat({ flow, updateFlow }) {
     setMessages([]);
     setInput('');
     setPartialResponse('');
+    setIsLoading(false);
+  };
+
+  // Modificar updateFlow para guardar el historial
+  const handleFlowUpdate = (newSteps) => {
+    const newFlow = newSteps.map((step, index) => ({
+      id: index + 1,
+      content: step.content,
+      icon: step.icon || '▶️',
+      variables: {
+        input: step.variables?.input || [],
+        output: step.variables?.output || []
+      }
+    }));
+
+    updateFlow(newFlow);
+    setFlowHistory(prev => [...prev.slice(0, historyIndex + 1), newFlow]);
+    setHistoryIndex(prev => prev + 1);
+  };
+
+  const undoToMessage = (messageIndex) => {
+    // Retrocedemos al estado del flow anterior al mensaje seleccionado
+    const previousFlowState = flowHistory[messageIndex - 1] || flow;
+    if (previousFlowState) {
+      updateFlow(previousFlowState);
+      setHistoryIndex(messageIndex - 1);
+    }
+    // Eliminamos todos los mensajes desde el mensaje seleccionado (inclusive)
+    setMessages(prev => prev.slice(0, messageIndex));
   };
 
   return {
@@ -133,5 +173,6 @@ export function useChat({ flow, updateFlow }) {
     sendMessage,
     submitFeedback,
     clearChat,
+    undoToMessage,
   };
 } 

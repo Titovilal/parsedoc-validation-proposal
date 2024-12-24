@@ -10,6 +10,8 @@ import {
   PanelResizeHandle
 } from 'react-resizable-panels';
 import { GripVertical } from 'lucide-react';
+import { useResource } from '../contexts/ResourceContext';
+import TutorialModal from '../components/TutorialModal';
 
 const ResizeHandle = () => {
   return (
@@ -26,6 +28,7 @@ const ResizeHandle = () => {
 export default function Demo() {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedMessageIndex, setSelectedMessageIndex] = useState(null);
+  const [showTutorial, setShowTutorial] = useState(true);
   
   const [flow, setFlow] = useState([
     { 
@@ -83,7 +86,8 @@ export default function Demo() {
     partialResponse,
     sendMessage,
     submitFeedback,
-    clearChat
+    clearChat,
+    undoToMessage
   } = useChat({
     flow,
     updateFlow
@@ -107,6 +111,8 @@ export default function Demo() {
     submitFeedback(selectedMessageIndex, false, reason);
   };
 
+  const { lowResourceMode, toggleLowResourceMode } = useResource();
+
   return (
     <div className="min-h-screen p-2 sm:p-2 bg-gray-100">
       <PanelGroup direction="horizontal" className="h-[calc(100vh-1rem)]">
@@ -124,6 +130,9 @@ export default function Demo() {
               handleSubmit={handleSubmit}
               handleFeedback={handleFeedback}
               clearChat={clearChat}
+              lowResourceMode={lowResourceMode}
+              toggleLowResourceMode={toggleLowResourceMode}
+              undoToMessage={undoToMessage}
             />
           </div>
         </Panel>
@@ -144,6 +153,11 @@ export default function Demo() {
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         onSubmit={handleModalSubmit}
+      />
+      
+      <TutorialModal 
+        isOpen={showTutorial}
+        onClose={() => setShowTutorial(false)}
       />
     </div>
   );
