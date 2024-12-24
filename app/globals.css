@@ -12,3 +12,27 @@ body {
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Estilos para react-resizable-panels */
+[data-panel] {
+  height: calc(100vh - 1rem);
+}
+
+[data-panel-group] {
+  display: flex;
+  gap: 0.5rem;
+  height: calc(100vh - 1rem);
+}
+
+[data-panel-resize-handle] {
+  background-color: transparent;
+  transition: background-color 150ms;
+}
+
+[data-panel-resize-handle]:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+[data-panel-resize-handle][data-resize-active] {
+  background-color: rgba(0, 0, 0, 0.08);
+}

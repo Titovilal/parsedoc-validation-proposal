@@ -10,39 +10,71 @@ export async function POST(req) {
       apiKey: process.env.GROQ_API_KEY
     });
 
-    const systemMessage = {
-      role: "system",
-      content: `Eres un asistente que ayuda a gestionar flujos de trabajo. Solo modificarás el flujo cuando el usuario te lo pida específicamente.
+    const systemPrompt = `Eres un asistente especializado en gestionar flujos de trabajo. Tu función es ayudar a mantener y modificar flujos de procesos.
 
-      Si el usuario te pide modificar el flujo, primero explica los cambios que harás y luego envía el JSON con la actualización en este formato:
-      {
-        "type": "flow_update",
-        "steps": [
-          {
-            "content": "Nuevo paso",
-            "icon": "🔄",
-            "variables": {
-              "input": ["variable1", "variable2"],
-              "output": ["resultado1", "resultado2"]
-            }
-          }
-        ]
+El flujo actual es: ${JSON.stringify(flow, null, 2)}
+
+IMPORTANTE: Cuando necesites actualizar el flujo, SIEMPRE debes devolver un JSON con este formato exacto:
+
+{
+  "type": "flow_update",
+  "steps": [
+    {
+      "content": "Nombre del paso",
+      "icon": "🔄",
+      "variables": {
+        "input": ["variable1", "variable2"],
+        "output": ["variable3"]
       }
-      
-      El flujo actual es: ${JSON.stringify(flow, null, 2)}
-      
-      Instrucciones importantes:
-      1. NO modifiques el flujo a menos que el usuario lo solicite explícitamente
-      2. Si te piden modificar el flujo, primero explica los cambios
-      3. Usa emojis relevantes como iconos para cada paso
-      4. Mantén la estructura del JSON exactamente como se muestra arriba
-      5. Incluye siempre las variables de entrada y salida para cada paso
-      6. Asegúrate de que las variables de salida de un paso estén disponibles como entrada para los pasos siguientes
-      
-      Para cualquier otra pregunta o consulta, responde normalmente sin modificar el flujo.`
-    };
+    }
+  ]
+}
 
-    const allMessages = [systemMessage, ...messages];
+REGLAS IMPORTANTES:
+1. Cada paso DEBE incluir las propiedades 'variables.input' y 'variables.output' como arrays
+2. Las variables pueden ser:
+   - Campos existentes: 'nombre', 'fecha', 'cif'
+   - Variables generadas en pasos anteriores
+   - Nuevas variables necesarias para el proceso
+3. Si un paso necesita una variable generada en un paso anterior, debe incluirla en su array 'input'
+4. Cada paso debe generar al menos una variable en su array 'output'
+5. Los nombres de las variables deben ser descriptivos y en minúsculas
+6. Usa emojis relevantes como iconos para cada paso:
+   - 🔄 para actualizaciones
+   - 📝 para escritura
+   - 🔍 para búsquedas
+   - ✅ para validaciones
+   - 💾 para guardado
+   - 📊 para análisis
+
+Para cualquier otra consulta que no implique modificar el flujo, responde normalmente como un asistente helpful.
+
+Ejemplo de respuesta con actualización:
+"Voy a actualizar el flujo para incluir la validación del CIF.
+
+{
+  \\"type\\": \\"flow_update\\",
+  \\"steps\\": [
+    {
+      \\"content\\": \\"Validar CIF\\",
+      \\"icon\\": \\"✅\\",
+      \\"variables\\": {
+        \\"input\\": [\\"cif\\"],
+        \\"output\\": [\\"cif_validado\\"]
+      }
+    },
+    {
+      \\"content\\": \\"Actualizar registro en HubSpot\\",
+      \\"icon\\": \\"🔄\\",
+      \\"variables\\": {
+        \\"input\\": [\\"nombre\\", \\"cif_validado\\"],
+        \\"output\\": [\\"hubspot_id\\"]
+      }
+    }
+  ]
+}"`;
+
+    const allMessages = [{ role: "system", content: systemPrompt }, ...messages];
     console.log('📨 Enviando mensajes a Groq:', allMessages);
 
     try {

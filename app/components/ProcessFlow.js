@@ -14,7 +14,8 @@ export default function ProcessFlow({ flow, fields }) {
     navigator.clipboard.writeText(flowString);
   };
 
-  const containerVariants = {
+  // Definir variantes solo si no está en modo ligero
+  const containerVariants = !lowResources ? {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
@@ -22,12 +23,12 @@ export default function ProcessFlow({ flow, fields }) {
         staggerChildren: 0.1
       }
     }
-  };
+  } : {};
 
-  const itemVariants = {
+  const itemVariants = !lowResources ? {
     hidden: { opacity: 0, y: 20 },
     show: { opacity: 1, y: 0 }
-  };
+  } : {};
 
   const renderVariable = (varName, field, isInput) => {
     if (field) {
@@ -64,7 +65,7 @@ export default function ProcessFlow({ flow, fields }) {
     <div className="h-full bg-white/70 backdrop-blur-xl rounded-2xl shadow-lg shadow-gray-100/50 p-6 border border-gray-100 flex flex-col">
       <div className="flex justify-between items-center mb-4 flex-shrink-0">
         <h2 className="text-2xl font-semibold text-gray-800">
-          Flujo del Proceso
+          Flujo
         </h2>
         <div className="flex gap-2">
           <button
@@ -96,9 +97,9 @@ export default function ProcessFlow({ flow, fields }) {
       <AnimatePresence>
         {showFields && (
           <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
+            initial={!lowResources ? { height: 0, opacity: 0 } : false}
+            animate={!lowResources ? { height: 'auto', opacity: 1 } : false}
+            exit={!lowResources ? { height: 0, opacity: 0 } : false}
             className="mb-6 overflow-hidden"
           >
             <div className="border-b border-gray-100 pb-6">
@@ -111,9 +112,9 @@ export default function ProcessFlow({ flow, fields }) {
       <AnimatePresence>
         {showCode && (
           <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
+            initial={!lowResources ? { height: 0, opacity: 0 } : false}
+            animate={!lowResources ? { height: 'auto', opacity: 1 } : false}
+            exit={!lowResources ? { height: 0, opacity: 0 } : false}
             className="mb-6 overflow-hidden flex-shrink-0"
           >
             <div className="max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 rounded-xl">
@@ -128,20 +129,20 @@ export default function ProcessFlow({ flow, fields }) {
       <div className="flex-1 min-h-0 overflow-hidden">
         <motion.div
           className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 pr-2"
-          variants={!lowResources ? containerVariants : {}}
-          initial="hidden"
-          animate="show"
+          variants={containerVariants}
+          initial={!lowResources ? "hidden" : false}
+          animate={!lowResources ? "show" : false}
         >
           <AnimatePresence mode="popLayout">
             {flow.map((step, index) => (
               <motion.div
                 key={step.id}
                 className="w-full mb-4 last:mb-0"
-                variants={!lowResources ? itemVariants : {}}
-                initial="hidden"
-                animate="show"
-                exit={{ opacity: 0, x: -100 }}
-                layout
+                variants={itemVariants}
+                initial={!lowResources ? "hidden" : false}
+                animate={!lowResources ? "show" : false}
+                exit={!lowResources ? { opacity: 0, x: -100 } : false}
+                layout={!lowResources}
               >
                 <div className="bg-white p-3 rounded-xl shadow-sm hover:shadow-md hover:border-green-100 transition-all duration-200 border border-gray-100">
                   <div className="flex flex-col gap-2">
@@ -175,8 +176,8 @@ export default function ProcessFlow({ flow, fields }) {
                 {index < flow.length - 1 && (
                   <motion.div 
                     className="flex justify-center my-2"
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
+                    initial={!lowResources ? { scale: 0 } : false}
+                    animate={!lowResources ? { scale: 1 } : false}
                   >
                     <div className="h-6 w-px bg-gray-200"></div>
                   </motion.div>

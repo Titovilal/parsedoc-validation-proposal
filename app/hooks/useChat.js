@@ -22,8 +22,27 @@ export function useChat({ flow, updateFlow }) {
           const potentialJson = str.substring(startIndex, i + 1);
           try {
             const parsed = JSON.parse(potentialJson);
-            jsonObjects.push({ json: parsed, string: potentialJson });
-          } catch (e) {}
+            // Validar estructura básica
+            if (parsed.type === 'flow_update' && Array.isArray(parsed.steps)) {
+              // Validar y normalizar cada paso
+              const validSteps = parsed.steps.every(step => 
+                step.content && 
+                step.icon && 
+                step.variables &&
+                Array.isArray(step.variables.input) &&
+                Array.isArray(step.variables.output)
+              );
+
+              if (validSteps) {
+                console.log('JSON válido encontrado:', parsed);
+                jsonObjects.push({ json: parsed, string: potentialJson });
+              } else {
+                console.log('JSON con estructura inválida:', parsed);
+              }
+            }
+          } catch (e) {
+            console.log('Error parsing JSON:', e);
+          }
         }
       }
     }
@@ -71,9 +90,8 @@ export function useChat({ flow, updateFlow }) {
         for (const { json, string } of jsonObjects) {
           console.log('JSON encontrado:', json); // Log para depuración
           if (json.type === 'flow_update') {
-            console.log('Actualizando flow con:', json.steps); // Log para depuración
+            console.log('Actualizando flow con:', json.steps);
             updateFlow(json.steps);
-            // Limpiar el JSON del mensaje
             accumulatedResponse = accumulatedResponse.replace(string, '');
             setPartialResponse(accumulatedResponse);
           }
@@ -100,6 +118,12 @@ export function useChat({ flow, updateFlow }) {
     ));
   };
 
+  const clearChat = () => {
+    setMessages([]);
+    setInput('');
+    setPartialResponse('');
+  };
+
   return {
     messages,
     input,
@@ -108,5 +132,6 @@ export function useChat({ flow, updateFlow }) {
     partialResponse,
     sendMessage,
     submitFeedback,
+    clearChat,
   };
 } 

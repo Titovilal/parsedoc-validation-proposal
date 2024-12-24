@@ -1,7 +1,7 @@
 'use client';
 import { useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { ThumbsUp, ThumbsDown } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useResource } from '../contexts/ResourceContext';
 
@@ -11,20 +11,40 @@ const MessageContent = ({ content }) => (
   </div>
 );
 
-export default function Chat({ messages, input, setInput, isLoading, partialResponse, handleSubmit, handleFeedback }) {
+export default function Chat({ 
+  messages, 
+  input, 
+  setInput, 
+  isLoading, 
+  partialResponse, 
+  handleSubmit, 
+  handleFeedback,
+  clearChat
+}) {
   const chatContainerRef = useRef(null);
-  const { lowResources, setLowResources } = useResource();
+  const { lowResources } = useResource();
 
-  const messageVariants = {
+  const messageVariants = !lowResources ? {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0 },
     exit: { opacity: 0, x: -100 }
-  };
+  } : {};
 
   return (
-    <div className="w-1/3 bg-white/70 backdrop-blur-xl rounded-2xl shadow-lg shadow-gray-100/50 p-6 border border-gray-100">
+    <div className="h-full bg-white/70 backdrop-blur-xl rounded-2xl shadow-lg shadow-gray-100/50 p-6 border border-gray-100">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-semibold text-gray-800">Chat con IA</h2>
+        <div className="flex items-center gap-4">
+          <h2 className="text-2xl font-semibold text-gray-800">Chat</h2>
+          <button
+            onClick={clearChat}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-600 hover:text-red-700 
+            bg-red-50 hover:bg-red-100 rounded-lg transition-all duration-200 border border-red-100 
+            hover:border-red-200 shadow-sm hover:shadow active:scale-95"
+          >
+           <Trash2 className="h-5 w-5" />
+            Limpiar chat
+          </button>
+        </div>
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-600">Modo ligero</span>
           <button
@@ -50,11 +70,11 @@ export default function Chat({ messages, input, setInput, isLoading, partialResp
           {messages.map((message, index) => (
             <motion.div
               key={index}
-              variants={!lowResources ? messageVariants : {}}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              layout
+              variants={messageVariants}
+              initial={!lowResources ? "hidden" : false}
+              animate={!lowResources ? "visible" : false}
+              exit={!lowResources ? "exit" : false}
+              layout={!lowResources}
               className={`p-4 rounded-2xl backdrop-blur-sm transition-all duration-200 ${
                 message.role === 'user' 
                   ? 'bg-green-50 ml-auto max-w-[80%] hover:shadow-md border border-green-100' 
@@ -64,8 +84,8 @@ export default function Chat({ messages, input, setInput, isLoading, partialResp
               <MessageContent content={message.content} />
               {message.role === 'assistant' && (
                 <motion.div 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
+                  initial={!lowResources ? { opacity: 0 } : false}
+                  animate={!lowResources ? { opacity: 1 } : false}
                   className="mt-2 flex gap-2"
                 >
                   <button
@@ -92,8 +112,8 @@ export default function Chat({ messages, input, setInput, isLoading, partialResp
         
         {partialResponse && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={!lowResources ? { opacity: 0, y: 20 } : false}
+            animate={!lowResources ? { opacity: 1, y: 0 } : false}
             className="bg-white p-4 rounded-2xl mr-auto max-w-[80%] border border-gray-100"
           >
             <MessageContent content={partialResponse} />
@@ -112,7 +132,7 @@ export default function Chat({ messages, input, setInput, isLoading, partialResp
         <motion.button
           type="submit"
           disabled={isLoading}
-          whileTap={!lowResources ? { scale: 0.95 } : {}}
+          whileTap={!lowResources ? { scale: 0.95 } : false}
           className="px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all disabled:bg-green-300 shadow-lg shadow-green-600/10 hover:shadow-xl hover:shadow-green-600/20"
         >
           Enviar
